@@ -1,0 +1,61 @@
+function GenerateSlide() {
+
+  var namedRanges = SpreadsheetApp.getActiveSheet().getNamedRanges();
+if (namedRanges.length > 0) {
+  Logger.log(namedRanges[0].getName());
+}
+
+//  Dossier contenant les templates Google Slide
+  var dossierTemplate = DriveApp.getFolderById(SpreadsheetApp.getActiveSpreadsheet().getRangeByName('TEMPLATEFOLDER').getValue());
+// Dossier Transit
+  var dossierTransit = DriveApp.getFolderById(SpreadsheetApp.getActiveSpreadsheet().getRangeByName('TRANSITFOLDERSLIDES').getValue());
+  var dossierTransitPdf = DriveApp.getFolderById(SpreadsheetApp.getActiveSpreadsheet().getRangeByName('TRANSITFOLDERPDF').getValue());
+  
+var PresTemplates = dossierTemplate.getFilesByName(SpreadsheetApp.getActiveSpreadsheet().getRangeByName('AGEGROUP').getValue());
+while (PresTemplates.hasNext()) {
+  var PresTemplate = PresTemplates.next();
+}
+/*  var PresDestinations = dossierDestinations.getFoldersByName(SpreadsheetApp.getActiveSpreadsheet().getRangeByName('_WEEK_').getValue());
+while (PresDestinations.hasNext()) {
+  var PresDestination = PresDestinations.next();
+}*/
+  
+  var PresFinale = PresTemplate.makeCopy(SpreadsheetApp.getActiveSpreadsheet().getRangeByName('TITLE').getValue(),dossierTransit);
+//  PresFinale.setName( SpreadsheetApp.getActiveSpreadsheet().getRangeByName('TITLE').getValue());
+  var preso = SlidesApp.openById(PresFinale.getId());
+  SpreadsheetApp.getActiveSpreadsheet().getRangeByName('SLIDELINK').setValue(preso.getUrl());
+  SpreadsheetApp.getActiveSpreadsheet().rename(SpreadsheetApp.getActiveSpreadsheet().getRangeByName('TITLE').getValue());
+   for (var i=0; i<namedRanges.length; i++){
+   preso.replaceAllText(namedRanges[i].getName(),AggregateValues(namedRanges[i].getRange().getValues()));
+   }  
+   preso.saveAndClose(); // Convert to PDF 
+    let pdf = PresFinale.getBlob().getAs('application/pdf'); 
+     var title = SpreadsheetApp.getActiveSpreadsheet().getRangeByName('TITLE').getValue(); 
+      let pdffile = dossierTransitPdf.createFile(pdf).setName(title + '.pdf');   
+    
+    SpreadsheetApp.getActiveSpreadsheet().getRangeByName('PDFLINK').setValue(pdffile.getUrl());
+     
+}
+
+
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  // Or DocumentApp or FormApp.
+  ui.createMenu('AFTER SCHOOL TAS')
+      .addItem('Produce Google Slide', 'GenerateSlide')
+      .addSeparator()
+      .addToUi();
+}
+
+
+function AggregateValues(tableau)
+
+{
+  var chaine='';
+  for (var j=0; j<tableau[0].length; j++)
+ {
+   chaine+=tableau[0][j];
+   chaine+="  ";
+ }
+  return chaine;
+}
